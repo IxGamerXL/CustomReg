@@ -2,7 +2,7 @@ const inq = require('inquirer');
 const fs = require('fs');
 const os = require('os')
 
-const forbiddenChars = '\\|/.:*?"\'`<>#';
+const forbiddenChars = '\\';
 const rawpath = `${os.userInfo().homedir}\\CustomRegData.json`;
 if(!fs.existsSync(rawpath)) fs.writeFileSync(rawpath, '{"selected":"data","lists":{"data":{}}}')
 const reg = JSON.parse(fs.readFileSync(rawpath));
@@ -87,7 +87,8 @@ const acts = {
 			prefix: `[${reg.selected}-edit]`
 		}]).then(c => {
 			let cd = new Date();
-			let dayName = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][cd.getDay()];
+			let dayName = ["sun","mon","tue","wed","thu","fri","sat"][cd.getDay()];
+			let monthName = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"][cd.getMonth()];
 			let az = (i, m) => {
 				if (m == undefined) m = 2;
 
@@ -99,14 +100,16 @@ const acts = {
 			};
 
 			c[0] = c[0].trim()
-				.replace(/@dt:full/g, `${az(cd.getHours())}-${az(cd.getMinutes())}-${az(cd.getSeconds())}:${az(cd.getMonth())}-${az(cd.getDate())}-${cd.getFullYear()}`)
-				.replace(/@dt:time/g, `${az(cd.getHours())}-${az(cd.getMinutes())}-${az(cd.getSeconds())}`)
-				.replace(/@dt:date/g, `${az(cd.getMonth())}-${az(cd.getDate())}-${cd.getFullYear()}`)
+				.replace(/@dt:compact/g, `${az(cd.getHours())}${az(cd.getMinutes())}${az(cd.getSeconds())}${az(cd.getMonth()+1)}${az(cd.getDate())}${az(cd.getFullYear(), 4)}`)
+				.replace(/@dt:full/g, `${az(cd.getHours())}:${az(cd.getMinutes())}:${az(cd.getSeconds())} ${az(cd.getMonth()+1)}/${az(cd.getDate())}/${az(cd.getFullYear(), 4)}`)
+				.replace(/@dt:time/g, `${az(cd.getHours())}:${az(cd.getMinutes())}:${az(cd.getSeconds())}`)
+				.replace(/@dt:date/g, `${az(cd.getMonth()+1)}/${az(cd.getDate())}/${cd.getFullYear()}`)
 				.replace(/@dt:hours/g, az(cd.getHours()))
 				.replace(/@dt:minutes/g, az(cd.getMinutes()))
 				.replace(/@dt:seconds/g, az(cd.getSeconds()))
 				.replace(/@dt:milliseconds/g, az(cd.getMilliseconds(), 3))
-				.replace(/@dt:month/g, az(cd.getMonth()))
+				.replace(/@dt:monthname/g, monthName)
+				.replace(/@dt:month/g, az(cd.getMonth()+1))
 				.replace(/@dt:dayname/g, dayName)
 				.replace(/@dt:day/g, az(cd.getDate()))
 				.replace(/@dt:year/g, az(cd.getFullYear(), 4));
@@ -172,9 +175,9 @@ const acts = {
 			message: "Select a list, create a new one, or delete one.",
 			prefix: `[${reg.selected}-lists]`,
 			type: "list",
-			choices: Object.keys(reg.lists).concat([new inq.Separator("\ "), ".ADD", ".BACK"])
+			choices: Object.keys(reg.lists).concat([new inq.Separator("\ "), "ADD ", "BACK "])
 		}]).then(c => {
-			if (c[0] == ".ADD") {
+			if (c[0] == "ADD ") {
 				inq.prompt([{
 					name: "0",
 					message: "Input new list name.",
